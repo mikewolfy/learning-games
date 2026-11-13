@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Learning Games Arcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>🎮 Learning Games Arcade</h1>
+      <p>Pick a game to play! Each one is a fun way to practice what you're learning in school.</p>
+    </section>
+
+    <!--
+      To add a new game:
+        1. Make a folder in games/ (for example games/spelling/) with an index.html inside.
+        2. Copy one of the <a class="game-card"> blocks below and change the link, art, title and text.
+    -->
+    <section class="game-grid">
+
+      <a class="game-card" href="games/westward/index.html">
+        <div class="art" style="background: linear-gradient(#ffd27a, #f4a259);">
+          <svg viewBox="0 0 120 80" aria-hidden="true">
+            <path d="M22 44 Q22 10 60 10 Q98 10 98 44 Z" fill="#fffaf0" stroke="#8a6a3a" stroke-width="3"/>
+            <path d="M40 44 Q40 16 60 12 M80 44 Q80 16 60 12" fill="none" stroke="#d9c7a3" stroke-width="2"/>
+            <rect x="16" y="42" width="88" height="14" rx="3" fill="#8a4b22"/>
+            <circle cx="34" cy="62" r="13" fill="none" stroke="#4a2a10" stroke-width="4"/>
+            <circle cx="86" cy="62" r="13" fill="none" stroke="#4a2a10" stroke-width="4"/>
+            <circle cx="34" cy="62" r="3" fill="#4a2a10"/><circle cx="86" cy="62" r="3" fill="#4a2a10"/>
+          </svg>
+        </div>
+        <div class="body">
+          <h2>Westward Wagons</h2>
+          <div class="tags">
+            <span class="tag orange">Social Studies</span>
+            <span class="tag">Grades 3–8</span>
+          </div>
+          <p>Lead your family's wagon 2,000 miles from Missouri to Oregon in 1848. Cross rivers, climb mountains and make smart choices to reach the end of the trail!</p>
+          <span class="btn block">Play ▶</span>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/multiplication/index.html">
+        <div class="art" style="background: linear-gradient(#8fd3ff, #4a7cf7);">🚀</div>
+        <div class="body">
+          <h2>Times Table Blast</h2>
+          <div class="tags">
+            <span class="tag green">Math</span>
+            <span class="tag">Grades 2–6</span>
+          </div>
+          <p>Answer multiplication questions to launch your rocket into space. Pick which times tables to practice and try to beat your best score!</p>
+          <span class="btn block">Play ▶</span>
+        </div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="art" style="background: linear-gradient(#d7f5c8, #8fd18a);">❓</div>
+        <div class="body">
+          <h2>More games coming soon!</h2>
+          <p>New games will show up here.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+  <footer class="footer">Made for learning and having fun 💛</footer>
+</body>
+</html>

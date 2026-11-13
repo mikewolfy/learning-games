@@ -1,0 +1,165 @@
+/* Shared styles for the Learning Games Arcade */
+:root {
+  --bg: #fdf6e9;
+  --surface: #ffffff;
+  --text: #2b2a33;
+  --muted: #6b6878;
+  --primary: #3b6ef5;
+  --primary-dark: #2a52c4;
+  --good: #22a55b;
+  --bad: #e2463b;
+  --warn: #f2a516;
+  --border: #e7dfcf;
+  --shadow: 0 6px 18px rgba(60, 40, 10, 0.12);
+  --radius: 18px;
+  --font: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+a { color: var(--primary); }
+
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 3px solid var(--border);
+}
+.topbar .home-link {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1rem;
+  white-space: nowrap;
+}
+.topbar h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  text-align: center;
+  flex: 1;
+}
+.topbar .spacer { width: 110px; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--primary-dark);
+  transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+  text-decoration: none;
+  min-height: 48px;
+}
+.btn:hover { filter: brightness(1.07); }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--primary-dark); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.secondary { background: #ece6d8; color: var(--text); box-shadow: 0 4px 0 #cfc5ae; }
+.btn.good { background: var(--good); box-shadow: 0 4px 0 #17803f; }
+.btn.warn { background: var(--warn); box-shadow: 0 4px 0 #c27f05; color: #2b2a33; }
+.btn.small { padding: 8px 14px; font-size: 0.95rem; min-height: 40px; }
+.btn.block { width: 100%; }
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.hidden { display: none !important; }
+
+.muted { color: var(--muted); }
+
+.center { text-align: center; }
+
+/* ---------- Home page ---------- */
+.hero {
+  text-align: center;
+  padding: 28px 16px 8px;
+}
+.hero h1 {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  margin: 0 0 6px;
+  color: #2a2a8a;
+}
+.hero p { margin: 0 auto; max-width: 620px; color: var(--muted); }
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+  margin-top: 28px;
+}
+.game-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.game-card:hover { transform: translateY(-5px) rotate(-0.5deg); box-shadow: 0 12px 26px rgba(60, 40, 10, 0.18); }
+.game-card .art {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4.5rem;
+}
+.game-card .art svg { height: 110px; width: auto; }
+.game-card .body { padding: 16px 20px 20px; flex: 1; display: flex; flex-direction: column; }
+.game-card h2 { margin: 0 0 6px; font-size: 1.4rem; }
+.game-card p { margin: 0 0 14px; color: var(--muted); flex: 1; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.tag {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3346a8;
+}
+.tag.green { background: #e6f7ec; color: #17803f; }
+.tag.orange { background: #fff1db; color: #a35f00; }
+.game-card.coming-soon { opacity: 0.6; pointer-events: none; }
+
+.footer { text-align: center; color: var(--muted); font-size: 0.9rem; padding: 32px 16px; }
+
+@media (max-width: 520px) {
+  html, body { font-size: 16px; }
+  .topbar .spacer { display: none; }
+  .topbar h1 { font-size: 1.1rem; }
+}
