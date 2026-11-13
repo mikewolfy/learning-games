@@ -9,7 +9,8 @@
   const SET_BONUS = 50;
   const VOWELS = "AEIOU";
   const TIME_CHOICES = [60, 120, 180];
-  const BOARD_SIZE = 10;
+  const BOARD_SIZE = 50;   // how many top scores are kept for each time limit
+  const SHOW_TOP = 10;     // how many are shown until "Show all" is pressed
   const KEY_SCORES = "ws-scores-v1";
   const KEY_PREFS = "ws-prefs-v1";
 
@@ -54,11 +55,26 @@
     return list.findIndex((e) => e === entry || (e.t === entry.t && e.s === entry.s && e.n === entry.n));
   }
 
-  function boardHTML(sec, highlightT) {
+  function boardHTML(sec, highlightT, expanded) {
     const list = getScores(sec);
     if (!list.length) return `<p class="empty">No scores yet. Be the first!</p>`;
+    const shown = expanded ? list : list.slice(0, SHOW_TOP);
+    const medal = (i) => (i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1);
     return `<table class="board"><thead><tr><th class="rank">#</th><th>Name</th><th class="num">Score</th><th class="num">Words</th></tr></thead><tbody>
-      ${list.map((e, i) => `<tr class="${e.t === highlightT ? "me" : ""}"><td class="rank">${i + 1 === 1 ? "🥇" : i + 1 === 2 ? "🥈" : i + 1 === 3 ? "🥉" : i + 1}</td><td>${esc(e.n)}</td><td class="num">${e.s}</td><td class="num">${e.w}</td></tr>`).join("")}</tbody></table>`;
+      ${shown.map((e, i) => `<tr class="${e.t === highlightT ? "me" : ""}"><td class="rank">${medal(i)}</td><td>${esc(e.n)}</td><td class="num">${e.s}</td><td class="num">${e.w}</td></tr>`).join("")}</tbody></table>
+      ${list.length > SHOW_TOP ? `<div class="center"><button class="btn secondary small" data-toggle>${expanded ? "Show top " + SHOW_TOP + " only" : "Show all " + list.length + " scores"}</button></div>` : ""}`;
+  }
+  // Draw the leaderboard into an element and wire up its "show all" button
+  function mountBoard(id, sec, highlightT) {
+    const list = getScores(sec);
+    // if the new score is outside the top 10, open the full list so the player can find it
+    let expanded = highlightT != null && list.findIndex((e) => e.t === highlightT) >= SHOW_TOP;
+    const draw = () => {
+      $(id).innerHTML = boardHTML(sec, highlightT, expanded);
+      const t = $(id).querySelector("[data-toggle]");
+      if (t) t.onclick = () => { expanded = !expanded; draw(); };
+    };
+    draw();
   }
 
   // ===================================================================
@@ -93,7 +109,7 @@
     function refresh() {
       app.querySelectorAll("[data-sec]").forEach((b) => b.classList.toggle("on", Number(b.dataset.sec) === seconds));
       $("boardLabel").textContent = label(seconds);
-      $("board").innerHTML = boardHTML(seconds);
+      mountBoard("board", seconds);
     }
     app.querySelectorAll("[data-sec]").forEach((b) => (b.onclick = () => { seconds = Number(b.dataset.sec); writeJSON(KEY_PREFS, { ...prefs, sec: seconds }); refresh(); }));
     refresh();
@@ -312,13 +328,14 @@
             <div class="save-row"><input type="text" id="nameBox" maxlength="12" placeholder="Your name" value="${esc(prefs.name || "")}" autocomplete="off"><button class="btn go" id="saveBtn">Save score</button></div>` : ""}
         </div>
         <h3 class="section-title" style="margin-top:14px">🏆 Top scores (${label(r.sec)})</h3>
-        <div id="board" style="text-align:left">${boardHTML(r.sec)}</div>
+        <div id="board" style="text-align:left"></div>
         <div class="action-row" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">
           <button class="btn go" id="againBtn">Play again</button>
           <button class="btn secondary" id="changeBtn">Change time</button>
         </div>
       </div>`;
     window.scrollTo({ top: 0 });
+    mountBoard("board", r.sec);
     $("againBtn").onclick = () => { seconds = r.sec; countdown(); };
     $("changeBtn").onclick = startScreen;
     const saveBtn = $("saveBtn");
@@ -329,7 +346,7 @@
         const entry = { n: name, s: r.score, w: r.words.length, t: Date.now() };
         addScore(r.sec, entry);
         $("saveArea").innerHTML = `<p class="result-text" style="margin:6px 0">✅ Saved! Nice work, ${esc(name)}.</p>`;
-        $("board").innerHTML = boardHTML(r.sec, entry.t);
+        mountBoard("board", r.sec, entry.t);
       };
       saveBtn.onclick = save;
       $("nameBox").addEventListener("keydown", (e) => { if (e.key === "Enter") save(); });
