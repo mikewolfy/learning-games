@@ -8,6 +8,7 @@ A collection of fun learning games for elementary and middle school kids. Everyt
 | --- | --- | --- |
 | **Westward Wagons** (`games/westward/`) | Social Studies (grades 3–8) | Lead a pioneer family's wagon 2,000 miles from Independence, Missouri to Oregon City in 1848. Buy supplies, choose pace and food portions, cross rivers, and make decisions when challenges come up. Each landmark and event teaches a real history fact, collected in a History Journal, and the game ends with a Trail Quiz. |
 | **Times Table Blast** (`games/multiplication/`) | Math (grades 2–6) | Multiplication quiz. Pick which times tables (1–12) to practice, then play 10 or 20 questions or a 60-second "Beat the Clock" round. Missed facts come back again later, and the results screen lists facts to practice. Best scores are saved in the browser. |
+| **Stand Tycoon** (`games/economics/`) | Economics (grades 4–8) | Run a small business for 20 days. Buy ingredients, set prices, choose advertising and buy upgrades while reacting to weather and news (a rival opens, frost raises costs, a festival comes to town). Kids discover supply and demand, profit, fixed vs. variable costs, competition, inflation, opportunity cost and investing, collect "Econ words", see their own demand chart, earn badges, and finish with a quiz. |
 
 ## Playing it
 
@@ -29,6 +30,10 @@ games/westward/                Westward Wagons
   westward.js                  Game engine
   westward.css                 Game styles
 games/multiplication/          Times Table Blast
+games/economics/               Stand Tycoon
+  economics-data.js            Econ vocabulary, news events, quiz questions
+  economics.js                 Game engine
+  economics.css                Game styles
 ```
 
 The Westward Wagons history content all lives in `westward-data.js`, so it's easy to add new events or quiz questions.
