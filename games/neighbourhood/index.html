@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neighbourhood Tycoon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="neighbourhood.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="home-link" href="../../index.html">← All Games</a>
+    <h1>🏘️ Neighbourhood Tycoon</h1>
+    <span class="spacer"></span>
+  </header>
+
+  <main class="wrap" id="app">
+    <noscript>This game needs JavaScript turned on.</noscript>
+  </main>
+
+  <div class="modal-backdrop hidden" id="modal">
+    <div class="modal card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-icon" id="modalIcon"></div>
+      <h2 id="modalTitle"></h2>
+      <div id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <script src="neighbourhood-data.js"></script>
+  <script src="neighbourhood-store.js"></script>
+  <script src="neighbourhood.js"></script>
+</body>
+</html>
