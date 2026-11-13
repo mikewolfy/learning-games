@@ -59,6 +59,7 @@ a { color: var(--primary); }
   flex: 1;
 }
 .topbar .spacer { width: 110px; }
+.topbar .ext-link { min-width: 110px; text-align: right; text-decoration: none; font-weight: 600; font-size: 0.95rem; color: var(--primary); white-space: nowrap; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -161,5 +162,7 @@ a { color: var(--primary); }
 @media (max-width: 520px) {
   html, body { font-size: 16px; }
   .topbar .spacer { display: none; }
+  .topbar .ext-link { min-width: 0; font-size: 0.85rem; }
+  .topbar { padding: 10px 12px; gap: 8px; }
   .topbar h1 { font-size: 1.1rem; }
 }
