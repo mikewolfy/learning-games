@@ -36,6 +36,10 @@ VOWELS = "aeiou"
 CONSONANTS = "bcdfghklmnprstw"     # common consonants (no J Q V X Z, and Y is left out on purpose)
 NUM_SETS = 100
 S_SETS = 80            # at least this many sets contain an S, so plurals (CATS, PIGS...) can be spelled
+# Stage 2: 50 MORE sets, chosen for how many words they can make. 40 of them contain an S, so
+# 120 of the 150 sets can spell plurals. (Stage 1 is unchanged, so the first 100 sets never change.)
+MORE_SETS = 50
+MORE_S_SETS = 40
 MIN_COMMON, MIN_TOTAL = 18, 35
 OUT = os.path.join(os.path.dirname(__file__), "..", "games", "wordsprint", "wordsprint-data.js")
 
@@ -77,6 +81,26 @@ def main():
         v, c, ws, cm = best
         for k in c: use_c[k] += 1
         use_v[v] = use_v.get(v, 0) + 1
+        chosen.append(best)
+
+    # Stage 2: pick the sets that generate the MOST words among those that are left. Letters are
+    # still spread around (a penalty for reusing a consonant or vowel trio within this stage).
+    stage1 = len(chosen)
+    use_c2 = {c: 0 for c in CONSONANTS}
+    use_v2 = {}
+    while len(chosen) < stage1 + MORE_SETS and cands:
+        need_s = len(chosen) - stage1 < MORE_S_SETS
+        pool = [x for x in cands if ("s" in x[1]) == need_s] or cands
+        def score2(x):
+            v, c, ws, cm = x
+            others = [k for k in c if not (need_s and k == "s")]
+            return len(ws) - 4.0 * sum(use_c2[k] for k in others) - 2.0 * use_v2.get(v, 0)
+        best = max(pool, key=lambda x: (score2(x), x[3], "".join(x[0] + x[1])))
+        cands.remove(best)
+        v, c, ws, cm = best
+        for k in c: use_c[k] += 1; use_c2[k] += 1
+        use_v[v] = use_v.get(v, 0) + 1
+        use_v2[v] = use_v2.get(v, 0) + 1
         chosen.append(best)
 
     sets = []
