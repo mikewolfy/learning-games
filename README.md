@@ -10,7 +10,7 @@ A collection of fun learning games for elementary and middle school kids. Everyt
 | **Times Table Blast** (`games/multiplication/`) | Math (grades 2–6) | Multiplication quiz. Pick which times tables (1–12) to practice, then play 10 or 20 questions or a 60-second "Beat the Clock" round. Missed facts come back again later, and the results screen lists facts to practice. Best scores are saved in the browser. |
 | **Stand Tycoon** (`games/economics/`) | Economics (grades 4–8) | Run a small business for 20 days. Buy ingredients, set prices, choose advertising and invest in 9 upgrades (Pro Equipment, Big Banner, Cooler, Secret Recipe, Supplier Contract, Backyard Garden, Weather Canopy, Loyalty Cards, Market Research), each with 5 levels that cost more as you go, while reacting to weather and news (a rival opens, frost raises costs, a festival comes to town). Kids discover supply and demand, profit, fixed vs. variable costs, competition, inflation, opportunity cost, investing and diminishing returns, collect "Econ words", see their own demand chart, earn badges, and finish with a quiz. |
 | **Neighbourhood Tycoon** (`games/neighbourhood/`) | Money & business (grades 4–8) | A season-by-season life sim. Each week kids split a few free hours across 12 side jobs (lemonade, mowing, babysitting, lifeguard, snow shoveling and more). Jobs need gear or training, depend on the season and weather, and level up with experience. Kids can set their price, save with interest, or invest in a fund or a risky single stock, and work toward a savings goal. Several players can share one browser; each player's progress is saved in cookies (with a localStorage fallback). |
-| **Word Sprint** (`games/wordsprint/`) | Spelling (grades 2–8) | Pick a 1, 2 or 3 minute timer, then spell four-letter words using six letters (3 vowels + 3 consonants, letters can repeat). Four words clears a set for a +50 bonus and brand-new letters. 100 letter sets (80 with an S so plurals work), each with its complete word list (ENABLE + Collins dictionaries) so no real word is rejected. The top 50 scores per time limit are saved in the browser. |
+| **Word Sprint** (`games/wordsprint/`) | Spelling (grades 2–8) | Pick a 1, 2 or 3 minute timer, then spell four-letter words using six letters (3 vowels + 3 consonants, letters can repeat). Four words clears a set for a +50 bonus and brand-new letters. 150 letter sets (120 with an S so plurals work), each with its complete word list (ENABLE + Collins dictionaries) so no real word is rejected. The top 50 scores per time limit are saved in the browser. |
 
 ## Playing it
 
@@ -42,7 +42,7 @@ games/neighbourhood/           Neighbourhood Tycoon
   neighbourhood.js             Game engine
   neighbourhood.css            Game styles
 games/wordsprint/              Word Sprint
-  wordsprint-data.js           100 letter sets + every valid word for each (generated)
+  wordsprint-data.js           150 letter sets + every valid word for each (generated)
   wordsprint.js                Game engine
   wordsprint.css               Game styles
 tools/build_wordsprint_data.py Regenerates the Word Sprint word lists
