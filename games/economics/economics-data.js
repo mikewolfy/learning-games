@@ -19,6 +19,11 @@ EC.concepts = {
   inflation: { icon: "🎈", title: "Inflation", text: "Inflation is when prices across the whole economy slowly rise. Your money buys a little less than it used to." },
   inventory: { icon: "📦", title: "Inventory & Spoilage", text: "Inventory is the stuff you have ready to sell. If you make too much and it spoils, you wasted money. If you make too little, you miss sales!" },
   investment: { icon: "🏗️", title: "Investing", text: "Investing means spending money now to earn more later. An upgrade costs cash today, but if it brings in extra profit, it pays for itself." },
+  diminishing: { icon: "📉", title: "Diminishing Returns", text: "Each extra level of an upgrade usually costs more but adds the same size boost (or less). The first levels are bargains; later ones may not pay for themselves. Smart owners compare what the next level costs to what it earns." },
+  loyalty: { icon: "💳", title: "Customer Loyalty", text: "Regular customers keep coming back, even in bad weather or when a rival opens. Keeping an old customer is usually cheaper than finding a new one." },
+  research: { icon: "🔬", title: "Market Research", text: "Market research means collecting information about customers before you decide. Better information leads to better choices about price and how much to make, though it costs money to get." },
+  scale: { icon: "🚚", title: "Economies of Scale", text: "Businesses that buy and sell in large amounts often get a lower price per item. A supplier contract works best when you buy a lot." },
+  risk: { icon: "⛱️", title: "Managing Risk", text: "Bad weather is a risk you can't control, but you can prepare for it. Spending a little to protect your business from bad luck, like a canopy or insurance, makes your income steadier." },
   debt: { icon: "🏦", title: "Debt", text: "Debt is money you borrowed and have to pay back. Borrowing can help in a pinch, but you owe it later." },
 };
 
@@ -103,4 +108,9 @@ EC.quiz = [
   { q: "Why did unsold smoothies at the end of the day cost you money?", a: ["You paid for ingredients that spoiled", "They were free", "They made profit overnight"], explain: "Inventory that spoils is money wasted. Planning how much to make is a key business skill." },
   { q: "You buy a faster blender to serve more customers later. This is an example of…", a: ["Investing", "Inflation", "Debt"], explain: "Investing means spending now to earn more later." },
   { q: "Prices across the whole town slowly go up by 20%. What is that called?", a: ["Inflation", "Competition", "Profit"], explain: "Inflation is a general rise in prices over time." },
+  { q: "Level 5 of an upgrade costs much more than level 1 but adds the same boost. What idea is that?", a: ["Diminishing returns", "Inflation", "Scarcity"], explain: "Later upgrade levels often cost more for the same (or smaller) benefit, so compare the cost to the extra profit." },
+  { q: "Why might a stand owner pay for loyalty cards?", a: ["Regular customers keep coming back, even in bad weather", "They make ingredients cheaper", "They remove rent"], explain: "Loyal customers give steadier income and are cheaper to keep than new customers are to find." },
+  { q: "What is market research?", a: ["Collecting information about customers before making decisions", "Buying ingredients in bulk", "Setting a lower price than a rival"], explain: "Information about what customers want helps you choose a better price and how much to make." },
+  { q: "You sign a supplier contract and pay less per ingredient because you buy a lot. This is called…", a: ["Economies of scale", "Inflation", "Opportunity cost"], explain: "Buying larger amounts can lower the price per item." },
+  { q: "You buy a canopy so rainy days hurt your sales less. This is an example of…", a: ["Managing risk", "Inflation", "Competition"], explain: "Preparing for bad luck makes your income steadier." },
 ];

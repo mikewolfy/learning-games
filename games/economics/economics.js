@@ -11,7 +11,7 @@
   const BASE_TRAFFIC = 28;    // people who walk past on an average day
   const BASE_REF = 3.0;       // what the average customer will pay on a cloudy day
   const BASE_CAPACITY = 30;   // servings you can make in a day
-  const STAR_GOALS = [200, 350, 500]; // net profit needed for 1, 2, 3 stars
+  const STAR_GOALS = [300, 600, 1000]; // net profit needed for 1, 2, 3 stars
 
   const PRODUCTS = {
     smoothie: { emoji: "🥤", one: "smoothie", many: "smoothies", name: "Smoothie" },
@@ -33,11 +33,36 @@
     mascot: { name: "Mascot on the corner", cost: 14, mult: 1.45, desc: "About 45% more people notice you." },
   };
 
+  // Every upgrade has 5 levels. costs[i] is the price of level i+1; effect(l) describes level l.
+  const MAX_LEVEL = 5;
   const UPGRADES = {
-    equipment: { emoji: "⚙️", name: "Pro Equipment", cost: 40, desc: "Serve up to 55 a day instead of 30. Great when it's busy!" },
-    banner: { emoji: "🎏", name: "Big Banner", cost: 30, desc: "20% more people notice your stand every day." },
-    storage: { emoji: "🧊", name: "Cooler", cost: 25, desc: "Keeps up to 15 unsold servings fresh for the next day." },
-    recipe: { emoji: "⭐", name: "Secret Recipe", cost: 45, desc: "Customers will pay about $0.60 more, but ingredients cost $0.20 more." },
+    equipment: { emoji: "⚙️", name: "Pro Equipment", costs: [25, 35, 50, 70, 100],
+      desc: "Serve more customers each day. Pair it with ways to attract more customers!",
+      effect: (l) => `Serve up to ${BASE_CAPACITY + 12 * l} a day` },
+    banner: { emoji: "🎏", name: "Big Banner", costs: [20, 30, 45, 65, 90],
+      desc: "More people notice your stand.",
+      effect: (l) => (l ? `${15 * l}% more customers notice you` : "No banner yet") },
+    storage: { emoji: "🧊", name: "Cooler", costs: [15, 25, 40, 60, 90],
+      desc: "Keeps unsold servings fresh for tomorrow, and ice-cold drinks are worth a bit more.",
+      effect: (l) => (l ? `Keeps up to ${10 * l} unsold servings overnight; customers pay about $${(0.1 * l).toFixed(2)} more` : "Everything unsold spoils overnight") },
+    recipe: { emoji: "⭐", name: "Secret Recipe", costs: [30, 45, 65, 90, 125],
+      desc: "A tastier product, so customers pay more. Better ingredients cost more too.",
+      effect: (l) => (l ? `Customers pay about $${(0.4 * l).toFixed(2)} more; ingredients cost $${(0.1 * l).toFixed(2)} more` : "Plain recipe") },
+    supplier: { emoji: "🚚", name: "Supplier Contract", costs: [10, 18, 30, 50, 75],
+      desc: "Buy in bulk from a supplier and pay less for ingredients.",
+      effect: (l) => (l ? `${10 * l}% off all ingredients` : "Full-price ingredients") },
+    garden: { emoji: "🌱", name: "Backyard Garden", costs: [20, 30, 45, 70, 105],
+      desc: "Grow your own ingredients for free servings every morning.",
+      effect: (l) => (l ? `${4 * l} free servings every morning` : "No free ingredients") },
+    canopy: { emoji: "⛱️", name: "Weather Canopy", costs: [8, 12, 16, 22, 30],
+      desc: "Protects your stand, so rain and cold scare off fewer customers.",
+      effect: (l) => (l ? `Bad weather hurts only ${100 - 20 * l}% as much` : "Bad weather hurts you fully") },
+    loyalty: { emoji: "💳", name: "Loyalty Cards", costs: [20, 30, 45, 65, 95],
+      desc: "Regulars visit in any weather, and stay loyal even when a rival opens.",
+      effect: (l) => (l ? `${3 * l} regular customers visit every day` : "No regular customers yet") },
+    research: { emoji: "🔬", name: "Market Research", costs: [15, 30, 50, 75, 110],
+      desc: "Learn what customers will do before you decide.",
+      effect: (l) => ["No forecast", "Rough customer forecast", "Sharper customer forecast", "Shows how many would buy at your price", "Predicts your sales", "Suggests the best price"][l] },
   };
 
   const PEOPLE = ["🧒", "👧", "👦", "👩", "👨", "🧑", "👵", "🧓", "👱", "🧔"];
@@ -74,13 +99,58 @@
     return "cloudy";
   }
 
+  const lvl = (k) => (s.up[k] || 0);
   function costPerServing() {
-    if (s.costOverride != null) return s.costOverride;
-    return round2((BASE_COST * modProduct("cost") + (s.up.recipe ? 0.2 : 0)) * s.inflation);
+    const base = s.costOverride != null ? s.costOverride : (BASE_COST * modProduct("cost") + 0.1 * lvl("recipe")) * s.inflation;
+    return round2(base * (1 - 0.10 * lvl("supplier")));
   }
-  function capacity() { return BASE_CAPACITY + (s.up.equipment ? 25 : 0); }
-  function trafficMult() { return WEATHER[s.weather].traffic * modProduct("traffic") * (s.up.banner ? 1.2 : 1) * ADS[s.plan.ad].mult; }
-  function refPrice() { return BASE_REF + WEATHER[s.weather].wtp + (s.up.recipe ? 0.6 : 0) + modSum("wtp"); }
+  function capacity() { return BASE_CAPACITY + 12 * lvl("equipment"); }
+  function keepLimit() { return 10 * lvl("storage"); }
+  function regulars() { return 3 * lvl("loyalty"); }
+  // The canopy wins back 20% of whatever bad weather takes away, per level
+  function weatherTraffic() { const t = WEATHER[s.weather].traffic; return t < 1 ? t + (1 - t) * 0.2 * lvl("canopy") : t; }
+  function weatherWtp() { const w = WEATHER[s.weather].wtp; return w < 0 ? w * (1 - 0.2 * lvl("canopy")) : w; }
+  function trafficMult() { return weatherTraffic() * modProduct("traffic") * (1 + 0.15 * lvl("banner")) * ADS[s.plan.ad].mult; }
+  function refPrice() { return BASE_REF + weatherWtp() + 0.4 * lvl("recipe") + 0.1 * lvl("storage") + modSum("wtp"); }
+
+  // ---- Market research: what share of customers would buy at a price? ----
+  // A customer's willingness to pay is ref + 1.4 * (sum of 3 random numbers - 1.5), so this is the
+  // chance that a sum of 3 random numbers (0 to 1 each) beats a threshold.
+  function sum3Cdf(t) {
+    if (t <= 0) return 0;
+    if (t >= 3) return 1;
+    if (t <= 1) return (t * t * t) / 6;
+    if (t <= 2) return (-2 * t * t * t + 9 * t * t - 9 * t + 3) / 6;
+    return 1 - Math.pow(3 - t, 3) / 6;
+  }
+  function buyShare(price) {
+    let share = 1 - sum3Cdf((price - refPrice()) / 1.4 + 1.5);
+    if (rivalActive() && s.rival.price < price) share *= 0.5; // half of those go to the rival
+    return share;
+  }
+  function forecast() {
+    const L = lvl("research");
+    if (!L) return null;
+    const mean = BASE_TRAFFIC * trafficMult() + regulars();
+    const spread = L === 1 ? 0.35 : L === 2 ? 0.2 : 0.1;
+    const f = { level: L, lo: Math.round(mean * (1 - spread)), hi: Math.round(mean * (1 + spread)) };
+    const cps = costPerServing();
+    f.share = buyShare(s.plan.price);
+    f.sales = Math.round(Math.min(mean * f.share, capacity(), s.stock + s.plan.buy));
+    let best = { price: 0.5, v: -Infinity };
+    for (let p = 0.5; p <= 8; p += 0.25) { const v = buyShare(p) * (p - cps); if (v > best.v) best = { price: p, v }; }
+    f.best = { price: best.price, share: buyShare(best.price) };
+    return f;
+  }
+  function researchHTML() {
+    const f = forecast();
+    if (!f) return `<div class="card research"><b>🔬 Market Research</b><p class="hint" style="margin:4px 0 0">Not unlocked yet. Buy this upgrade in the shop to see a forecast of today's customers before you decide.</p></div>`;
+    const lines = [`👥 About <b>${f.lo}–${f.hi}</b> customers will walk by today.`];
+    if (f.level >= 3) lines.push(`💲 At ${fmt(s.plan.price)}, about <b>${Math.round(f.share * 100)}%</b> of them would buy.`);
+    if (f.level >= 4) lines.push(`📦 You should sell about <b>${f.sales}</b> today (limited by customers, stock and how many you can serve).`);
+    if (f.level >= 5) lines.push(`🎯 Best price to try today: <b>${fmt(f.best.price)}</b> (about ${Math.round(f.best.share * 100)}% would buy).`);
+    return `<div class="card research"><b>🔬 Market Research <span class="lvl-tag">Level ${f.level}</span></b><ul class="rlist">${lines.map((l) => `<li>${l}</li>`).join("")}</ul></div>`;
+  }
 
   function unlock(id) {
     if (s.concepts.includes(id)) return false;
@@ -165,7 +235,7 @@
       product, name,
       day: 1, cash: START_CASH, loans: 0,
       stock: 0, rent: BASE_RENT, inflation: 1,
-      up: { equipment: false, banner: false, storage: false, recipe: false },
+      up: Object.fromEntries(Object.keys(UPGRADES).map((k) => [k, 0])),
       mods: [], rival: null, concepts: [], history: [],
       costOverride: null, minBuy: 0, pendingBuy: null,
       lastBuy: 20, lastPrice: 3,
@@ -195,6 +265,10 @@
       const first = unlock("debt");
       queue.push({ icon: "👵", title: "Grandma to the Rescue", html: `<p class="result-text">You're almost out of money, so Grandma lends you $25.</p><p>You'll need to pay it back: it will be subtracted from your final score.</p>${first ? conceptBox("debt") : ""}` });
     }
+
+    // Backyard garden: free servings every morning
+    s.gardenFree = 4 * lvl("garden");
+    if (s.gardenFree) s.stock += s.gardenFree;
 
     const evId = EC.schedule[s.day];
     if (evId) {
@@ -278,13 +352,15 @@
       <p class="muted" style="margin:-4px 4px 12px">${w.hint}</p>
 
       ${s.eventNote ? `<div class="news"><b>${s.todayEvent ? s.todayEvent.icon + " " + esc(s.todayEvent.title) : "📰 News"}:</b> ${esc(s.eventNote)}</div>` : ""}
+      ${s.gardenFree ? `<div class="news"><b>🌱 Garden:</b> your garden grew ${s.gardenFree} free ${pr.many} this morning.</div>` : ""}
       ${rivalActive() ? `<div class="news rival"><b>🏪 Rival stand:</b> they sell for ${fmt(s.rival.price)}. Customers may go there if you charge more.</div>` : ""}
+      ${Object.entries(UPGRADES).some(([k]) => lvl(k) > 0) ? `<div class="upchips">${Object.entries(UPGRADES).filter(([k]) => lvl(k) > 0).map(([k, u]) => `<span class="chip" title="${esc(u.effect(lvl(k)))}">${u.emoji} ${esc(u.name)} Lv ${lvl(k)}</span>`).join("")}</div>` : ""}
       ${last ? `<p class="muted" style="margin:0 4px 12px">Yesterday: you charged ${fmt(last.price)} and sold ${last.sold} for a profit of <b>${fmt(last.profit)}</b>.</p>` : ""}
 
       <div class="panels">
         <div class="card">
           <h3>🛒 1. Buy ingredients</h3>
-          <p class="hint">${fmt(cps)} per ${pr.one}. Unsold ingredients spoil overnight${s.up.storage ? " (except what fits in your cooler)" : ""}.${s.minBuy ? ` <b>Bulk deal: buy at least ${s.minBuy}.</b>` : ""}</p>
+          <p class="hint">${fmt(cps)} per ${pr.one}. Unsold ingredients spoil overnight${lvl("storage") ? ` (except up to ${keepLimit()} in your cooler)` : ""}.${s.minBuy ? ` <b>Bulk deal: buy at least ${s.minBuy}.</b>` : ""}</p>
           <div class="stepper">
             <button data-buy="-10" ${p.buy <= s.minBuy ? "disabled" : ""}>-10</button><button data-buy="-1" ${p.buy <= s.minBuy ? "disabled" : ""}>-1</button>
             <span class="val">${p.buy}</span>
@@ -311,7 +387,9 @@
         </div>
       </div>
 
-      <div class="card">
+      ${researchHTML()}
+
+      <div class="card" style="margin-top:14px">
         <div class="summary">
           <span>Ingredients: ${fmt(buyCost)}</span>
           <span>Advertising: ${fmt(ad.cost)}</span>
@@ -342,26 +420,42 @@
   }
 
   function shopModal(back) {
-    const rows = Object.entries(UPGRADES).map(([k, u]) => `
-      <div class="shop-item"><div class="em">${u.emoji}</div>
-        <div><b>${u.name}</b> — ${s.up[k] ? "✅ You own this" : fmt(u.cost)}<small>${u.desc}</small></div></div>`).join("");
-    const choices = Object.entries(UPGRADES).filter(([k]) => !s.up[k]).map(([k, u]) => ({
-      label: `Buy ${u.name} (${fmt(u.cost)})`, disabled: s.cash < u.cost, cls: "green",
-      hint: s.cash < u.cost ? "Not enough cash yet" : "",
-      onClick: () => {
-        s.cash = round2(s.cash - u.cost); s.up[k] = true;
-        const first = unlock("investment");
-        const done = () => shopModal(back);
-        if (first) openModal({ icon: "🏗️", title: `You bought ${u.name}!`, html: `<p class="result-text">${fmt(u.cost)} spent today could grow your profit later. Will it pay for itself?</p>${conceptBox("investment")}`, choices: [{ label: "Continue", onClick: done }] });
-        else done();
-      },
-    }));
-    choices.push({ label: "Close the shop", cls: "secondary", onClick: back });
+    const box = document.querySelector("#modal .modal");
+    const keep = box && !modal.classList.contains("hidden") ? box.scrollTop : 0;
+    const rows = Object.entries(UPGRADES).map(([k, u]) => {
+      const l = lvl(k), maxed = l >= MAX_LEVEL, cost = maxed ? 0 : u.costs[l];
+      return `<div class="shop-item"><div class="em">${u.emoji}</div><div>
+          <b>${esc(u.name)}</b> <span class="pips" title="Level ${l} of ${MAX_LEVEL}">${"●".repeat(l)}${"○".repeat(MAX_LEVEL - l)}</span> <span class="lvl-tag">Lv ${l}/${MAX_LEVEL}</span>
+          <small>${esc(u.desc)}</small>
+          <small><b>Now:</b> ${esc(u.effect(l))}</small>
+          ${maxed ? `<small class="maxed">🏅 Max level reached!</small>`
+            : `<small><b>Next (Lv ${l + 1}):</b> ${esc(u.effect(l + 1))}</small>
+               <button class="btn small green" data-up="${k}" ${s.cash < cost ? "disabled" : ""}>${l ? "Upgrade to Lv " + (l + 1) : "Buy"} for ${fmt(cost)}</button>`}
+        </div></div>`;
+    }).join("");
     openModal({
       icon: "🛠️", title: "Upgrade Shop",
-      html: `<p class="muted">You have <b>${fmt(s.cash)}</b>. Upgrades cost money now but may earn it back. Think about your opportunity cost!</p>${rows}`,
-      choices,
+      html: `<p class="muted">You have <b>${fmt(s.cash)}</b>. Every upgrade has ${MAX_LEVEL} levels, and each level costs more than the last. Think about your opportunity cost, and whether the next level will pay for itself!</p>${rows}`,
+      choices: [{ label: "Close the shop", cls: "secondary", onClick: back }],
     });
+    const nb = document.querySelector("#modal .modal");
+    if (nb) nb.scrollTop = keep;
+    document.querySelectorAll("#modalBody [data-up]").forEach((b) => (b.onclick = () => buyUpgrade(b.dataset.up, back)));
+  }
+
+  function buyUpgrade(k, back) {
+    const u = UPGRADES[k], l = lvl(k);
+    if (l >= MAX_LEVEL) return;
+    const cost = u.costs[l];
+    if (s.cash < cost) return;
+    s.cash = round2(s.cash - cost);
+    s.up[k] = l + 1;
+    const q = [];
+    if (unlock("investment")) q.push({ icon: "🏗️", title: `You bought ${u.name}!`, html: `<p class="result-text">${fmt(cost)} spent today could grow your profit later. Will it pay for itself?</p>${conceptBox("investment")}` });
+    if (l + 1 >= 3 && unlock("diminishing")) q.push({ icon: "📉", title: "Getting Pricey!", html: `<p class="result-text">${esc(u.name)} Level ${l + 1} cost ${fmt(cost)}, but the boost is about the same size as the first level.</p>${conceptBox("diminishing")}` });
+    const concept = { loyalty: "loyalty", research: "research", supplier: "scale", canopy: "risk" }[k];
+    if (concept && unlock(concept)) q.push({ icon: u.emoji, title: u.name, html: conceptBox(concept) });
+    showQueue(q, () => shopModal(back));
   }
 
   // ===================================================================
@@ -369,7 +463,8 @@
   // ===================================================================
   function simulate() {
     const p = s.plan, cps = costPerServing();
-    const n = Math.round(BASE_TRAFFIC * trafficMult() * (0.9 + rand() * 0.2));
+    const regs = regulars();
+    const n = Math.round(BASE_TRAFFIC * trafficMult() * (0.9 + rand() * 0.2)) + regs;
     const ref = refPrice();
     const rival = rivalActive() ? s.rival.price : null;
     const cap = capacity();
@@ -380,7 +475,8 @@
     for (let i = 0; i < n; i++) {
       const wtp = ref + (rand() + rand() + rand() - 1.5) * 1.4;
       let type;
-      if (rival != null && rival < p.price && wtp >= rival && rand() < 0.5) { type = "rival"; r.rival++; }
+      const isRegular = regs > 0 && rand() < regs / n; // regulars never switch to the rival
+      if (!isRegular && rival != null && rival < p.price && wtp >= rival && rand() < 0.5) { type = "rival"; r.rival++; }
       else if (wtp < p.price) { type = "pricey"; r.tooPricey++; }
       else if (r.sold >= cap) { type = "line"; r.line++; r.willing++; }
       else if (stock <= 0) { type = "soldout"; r.soldOut++; r.willing++; }
@@ -394,7 +490,7 @@
     r.rent = s.rent;
     r.profit = round2(r.revenue - r.ingredientCost - r.adCost - r.rent);
     const unsold = startStock - r.sold;
-    const keep = s.up.storage ? Math.min(15, unsold) : 0;
+    const keep = Math.min(keepLimit(), unsold);
     r.kept = keep; r.spoiled = unsold - keep;
     r.share = n - r.rival > 0 ? r.willing / (n - r.rival) : 0; // share of customers who'd buy at this price
     r.startStock = startStock;
@@ -589,7 +685,8 @@
       { icon: "🌟", name: "Profit Machine", desc: "Earned $75+ profit in one day", ok: h.some((d) => d.profit >= 75) },
       { icon: "📦", name: "Stock Master", desc: "Ran out of stock on 2 days or fewer", ok: h.filter((d) => d.soldOut > 3).length <= 2 },
       { icon: "♻️", name: "Zero Waste", desc: "Spoiled 15 items or fewer all game", ok: h.reduce((t, d) => t + d.spoiled, 0) <= 15 },
-      { icon: "🏗️", name: "Investor", desc: "Bought 2 or more upgrades", ok: Object.values(s.up).filter(Boolean).length >= 2 },
+      { icon: "🏗️", name: "Investor", desc: "Bought 2 or more upgrades", ok: Object.values(s.up).filter((l) => l > 0).length >= 2 },
+      { icon: "🏅", name: "Maxed Out", desc: "Took an upgrade all the way to Level 5", ok: Object.values(s.up).some((l) => l >= MAX_LEVEL) },
       { icon: "🔥", name: "Hot Streak", desc: "5 profitable days in a row", ok: best >= 5 },
       { icon: "🕵️", name: "Price Detective", desc: "Tried 6 or more different prices", ok: prices.size >= 6 },
     ];
@@ -618,6 +715,7 @@
           <div><b>${fmt(s.cash)}</b>cash at the end</div>
           <div><b>${s.history.reduce((t, d) => t + d.sold, 0)}</b>${P().many} sold</div>
           <div><b>${fmt(bestDay.profit)}</b>best day (day ${bestDay.day})</div>
+          <div><b>${Object.values(s.up).reduce((t, l) => t + l, 0)}</b>upgrade levels bought</div>
           <div><b>${s.concepts.length}</b>econ words learned</div>
         </div>
         ${s.loans ? `<p class="muted">Grandma's loans of ${fmt(s.loans)} were subtracted from your score.</p>` : ""}
@@ -681,5 +779,6 @@
   }
 
   window.ECON_DEBUG = () => s;
+  window.ECON_TEST = { UPGRADES, MAX_LEVEL, capacity, costPerServing, trafficMult, refPrice, forecast, buyShare, regulars, keepLimit, weatherTraffic, weatherWtp };
   titleScreen();
 })();
