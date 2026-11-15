@@ -71,6 +71,101 @@
   }
 
   // =====================================================================
+  // Travelers: traits, illnesses and "what's wrong with them"
+  // =====================================================================
+  const yt = () => WW.yearTypes.find((y) => y.id === s.yearId) || WW.yearTypes[0];
+  const traitOf = (p) => (p.trait ? WW.traits[p.trait] : null);
+  const dmgMult = (p) => (traitOf(p) ? traitOf(p).dmg : 1);
+  const healMult = (p) => (traitOf(p) ? traitOf(p).heal : 1);
+  function applyDamage(p, n) { p.health = clamp(p.health - n * dmgMult(p), 0, 100); }
+  function applyHeal(p, n) { p.health = clamp(p.health + n * healMult(p), 0, 100); }
+  const pickOne = (arr) => arr[Math.floor(rand() * arr.length)];
+  function pickWeighted(items, weights) {
+    let r = rand() * weights.reduce((t, w) => t + w, 0);
+    for (let i = 0; i < items.length; i++) { r -= weights[i]; if (r <= 0) return items[i]; }
+    return items[items.length - 1];
+  }
+
+  // Give someone an illness or injury. Prefers someone who isn't already sick.
+  function sicken(id, person, cause) {
+    const a = WW.ailments[id];
+    let p = person && !person.away ? person : null;
+    if (!p || p.ail) {
+      const healthy = active().filter((x) => !x.ail);
+      p = healthy.length ? pickOne(healthy) : p || pickOne(active());
+    }
+    if (!p) return null;
+    applyDamage(p, a.hit);
+    if (!p.ail || WW.ailments[p.ail.id].daily < a.daily) p.ail = { id, prog: 0, cause: cause || a.cause };
+    addLog(`${esc(p.name)} ${esc(p.ail.cause)} and has ${a.name}.`, true);
+    learn(a.name, a.desc);
+    learn("Illness on the Trail", WW.ailmentFact);
+    return p;
+  }
+
+  function cure(p) {
+    if (!p || !p.ail) { if (p) applyHeal(p, 15); return; }
+    const a = WW.ailments[p.ail.id];
+    p.ail = null;
+    applyHeal(p, 25);
+    addLog(`${esc(p.name)} was cured of ${a.name} with medicine.`, true);
+  }
+
+  function recover(p) {
+    const a = WW.ailments[p.ail.id];
+    p.ail = null;
+    addLog(`${esc(p.name)} got over ${a.name}.`, true);
+    s.notices.push({ icon: "🎉", title: `${p.name} Is Better!`, text: `${p.name} has recovered from ${a.name}. Rest and time did the trick.` });
+  }
+
+  // What's wrong with this traveler, in plain words (null if they're doing fine)
+  function conditionOf(p) {
+    if (p.away) return { icon: "🏚️", label: "Stayed behind", why: "Too sick to travel. They'll join you next year.", sev: "away" };
+    if (p.ail) {
+      const a = WW.ailments[p.ail.id];
+      const left = Math.max(1, Math.ceil(a.need - p.ail.prog));
+      return { key: "ail", icon: a.icon, label: a.name, why: `${p.ail.cause[0].toUpperCase()}${p.ail.cause.slice(1)}. ${a.care}`, left, sev: p.health < 40 ? "bad" : "warn", ail: true };
+    }
+    const noFood = s.supplies.food <= 0;
+    if (noFood) return { key: "hunger", icon: "🍽️", label: "Starving", why: "Your family is out of food. Gather food or buy more at the next fort.", sev: "bad" };
+    if (p.health < 65 && s.rations !== "filling") return { key: "hunger", icon: "🥣", label: "Weak from hunger", why: `Small food portions are wearing everyone down. Try "Filling" portions if you can.`, sev: p.health < 40 ? "bad" : "warn" };
+    if (isCold() && s.supplies.clothes < active().length && p.health < 80) return { key: "cold", icon: "🥶", label: "Freezing", why: "Not enough warm clothes for everyone in this cold weather.", sev: p.health < 40 ? "bad" : "warn" };
+    if (s.pace === "fast" && p.health < 70) return { key: "tired", icon: "😮‍💨", label: "Exhausted", why: "Traveling at a fast pace every day is tiring. A slower pace or a rest day helps.", sev: p.health < 40 ? "bad" : "warn" };
+    if (s.wx && s.wx.id === "hot" && s.pace === "fast" && p.health < 80) return { key: "tired", icon: "🥵", label: "Overheated", why: "Hard travel in scorching heat. Rest or slow down.", sev: "warn" };
+    if (p.health < 55) return { key: "worn", icon: "😩", label: "Worn out", why: "A long, hard trip is catching up with them. A few rest days will help.", sev: p.health < 35 ? "bad" : "warn" };
+    return null;
+  }
+
+  // The things pulling everyone's health up or down right now
+  function drains() {
+    const out = [];
+    const people = active();
+    if (s.supplies.food <= 0) out.push(["bad", "🍽️ You're out of food: everyone is getting weak fast."]);
+    else if (s.rations !== "filling") out.push(["warn", `🥣 "${RATIONS[s.rations].name}" food portions are weakening everyone.`]);
+    if (s.pace === "fast") out.push(["warn", "🏃 The fast pace is tiring everyone out."]);
+    if (isCold() && s.supplies.clothes < people.length) out.push(["bad", "🥶 It's cold and you don't have enough warm clothes."]);
+    else if (isCold() && s.supplies.clothes < people.length * 2) out.push(["warn", "❄️ It's cold, and a few more warm clothes would help."]);
+    if (s.wx && s.wx.id === "hot" && s.pace === "fast") out.push(["warn", "🥵 Fast travel in the scorching heat."]);
+    people.filter((p) => p.ail).forEach((p) => out.push(["warn", `${WW.ailments[p.ail.id].icon} ${p.name} has ${WW.ailments[p.ail.id].name}, which drains their strength every day.`]));
+    if (!out.length) out.push(["good", "✅ Nothing is dragging anyone down right now."]);
+    return out;
+  }
+
+  // The first time a condition like hunger or exhaustion shows up, explain it
+  function noteConditions() {
+    const seen = {};
+    active().forEach((p) => { const c = !p.ail && conditionOf(p); if (c && c.key) seen[c.key] = seen[c.key] || { c, p }; });
+    ["hunger", "cold", "tired", "worn"].forEach((k) => {
+      if (seen[k] && !s.flags["w_" + k]) {
+        s.flags["w_" + k] = true;
+        const { c, p } = seen[k];
+        s.notices.push({ icon: c.icon, title: `${p.name} Is ${c.label}`, text: `${p.name} isn't feeling well: ${c.why}` });
+        addLog(`${esc(p.name)} is ${c.label.toLowerCase()}.`, true);
+      } else if (!seen[k]) s.flags["w_" + k] = false;
+    });
+  }
+
+  // =====================================================================
   // Modal
   // =====================================================================
   const modal = document.getElementById("modal");
@@ -131,8 +226,19 @@
   function isCold() {
     const m = s.date.getMonth();
     const winterish = m >= 10 || m <= 2; // Nov–Mar
-    const mountainFall = m >= 8 && s.miles > 800; // Sep+ in the mountains
+    const mountainFall = m >= yt().coldMonth && s.miles > 800; // Sep+ in the mountains (earlier in an early-winter year)
     return winterish || mountainFall;
+  }
+
+  // The weather changes every few days. It slows you down and sometimes affects health.
+  function rollWeather() {
+    const m = s.date.getMonth(), y = yt();
+    const cold = isCold(), summer = m >= 5 && m <= 7;
+    const table = cold
+      ? [["cold", 30], ["snow", s.miles > 700 ? 14 : 4], ["cloudy", 22], ["sunny", 20], ["rain", 8 * y.rain]]
+      : [["sunny", 32], ["cloudy", 24], ["rain", 18 * y.rain], ["storm", 7 * y.rain], ["hot", (summer ? 22 : 5) * y.hot]];
+    s.wx = WW.weather[pickWeighted(table.map((t) => t[0]), table.map((t) => t[1]))];
+    return s.wx;
   }
 
   // Pass one day: eat food, change health. `restDay` gives extra healing.
@@ -150,8 +256,18 @@
       d += hungry ? -2.5 : RATIONS[s.rations].health;
       if (isCold() && s.supplies.clothes < people.length * 2) d -= s.supplies.clothes < people.length ? 2 : 0.8;
       if (s.date.getMonth() === 11 || s.date.getMonth() <= 1) d -= 1;
+      if (!restDay && s.wx && s.wx.id === "hot" && s.pace === "fast") d -= 0.6;
+      d *= d < 0 ? dmgMult(p) : healMult(p);            // hardy travelers shrug things off, frail ones don't
+      // an illness or injury drains health every day, but heals up with rest
+      if (p.ail) {
+        const a = WW.ailments[p.ail.id];
+        d -= a.daily * (restDay ? 0.25 : 1) * dmgMult(p);
+        p.ail.prog += (restDay ? 1 : 0.3) * healMult(p);
+      }
       p.health = clamp(p.health + d, 0, 100);
+      if (p.ail && p.ail.prog >= WW.ailments[p.ail.id].need) recover(p);
     });
+    noteConditions();
     const daysLeft = s.supplies.food / Math.max(1, need);
     if (!hungry && daysLeft < 8 && !s.flags.warnedLow) {
       s.flags.warnedLow = true;
@@ -176,19 +292,25 @@
       chance,
       active,
       monthIndex: () => s.date.getMonth(),
-      pick() { const a = active(); g.picked = a[Math.floor(rand() * a.length)]; return g.picked; },
+      // pick a traveler at random (preferring someone who isn't already sick)
+      pick() { const a = active(), h = a.filter((p) => !p.ail); g.picked = pickOne(h.length ? h : a); return g.picked; },
       days(n) { for (let i = 0; i < n; i++) passDay(false); },
+      restDays(n) { for (let i = 0; i < n; i++) passDay(true); },
+      sicken(id, person, cause) { const p = sicken(id, person, cause); g.picked = p; return p; },
+      cure(person) { cure(person); },
+      // move the wagon forward without passing the next landmark; returns how far you actually went
+      advance(miles) { const next = WW.landmarks[s.nextIdx]; const to = Math.min(next.miles - 1, s.miles + miles); const gained = Math.max(0, to - s.miles); s.miles = s.miles + gained; return gained; },
       change(item, delta) {
         const before = s.supplies[item];
         s.supplies[item] = Math.max(0, before + delta);
         return s.supplies[item] - before;
       },
       heal(amount, person) {
-        (person ? [person] : active()).forEach((p) => { if (!p.away) p.health = clamp(p.health + amount, 0, 100); });
+        (person ? [person] : active()).forEach((p) => { if (!p.away) { if (amount >= 0) applyHeal(p, amount); else applyDamage(p, -amount); } });
       },
       hurt(amount, person) {
         const p = person || g.pick();
-        if (p && !p.away) p.health = clamp(p.health - amount, 0, 100);
+        if (p && !p.away) applyDamage(p, amount);
         g.picked = p;
       },
     };
@@ -223,7 +345,9 @@
             <li>Buy supplies before you leave.</li>
             <li>Press <b>Travel On</b> to move your wagon down the trail.</li>
             <li>Make smart choices when you meet challenges.</li>
-            <li>Keep your family healthy and reach Oregon before winter!</li>
+            <li>Keep your family healthy. If someone gets sick or hurt, their condition shows up in the family list so you know what's wrong and what helps.</li>
+            <li>Every trip is different: the weather, the sicknesses, the trail year and who your travelers are all change each time you play!</li>
+            <li>Reach Oregon before winter!</li>
           </ul>
         </div>
         <button class="btn good" id="startBtn" style="font-size:1.25rem">Start your journey ▶</button>
@@ -287,8 +411,13 @@
     document.getElementById("toStore").onclick = () => {
       const family = names.map((n, i) => {
         const v = document.getElementById("name" + i).value.trim();
-        return { name: v || n, health: 100, away: false };
+        // every traveler is a little different: some are hardy, some are frail
+        const r = rand();
+        return { name: v || n, health: 92 + Math.floor(rand() * 9), away: false, ail: null, trait: r < 0.2 ? "hardy" : r < 0.4 ? "frail" : null };
       });
+      // make sure a family isn't ALL hardy or ALL frail
+      if (family.every((p) => p.trait === "frail")) family[1].trait = null;
+      const year = pickWeighted(WW.yearTypes, WW.yearTypes.map((y) => y.weight));
       s = {
         role,
         money: ROLES[role].money,
@@ -306,6 +435,11 @@
         notices: [],
         flags: {},
         lastEvent: null,
+        prevEvent: null,
+        seen: {},                 // how many times each event has happened this trip
+        priceLuck: {},            // each fort's prices vary from trip to trip
+        yearId: year.id,          // the "trail year" for this trip
+        wx: null,
         stepsSinceEvent: 0,
       };
       WW.landmarks.forEach((l) => { delete l.currentDepth; delete l.width; });
@@ -320,7 +454,11 @@
   function storeScreen(landmarkIdx) {
     const lm = WW.landmarks[landmarkIdx];
     const atStart = landmarkIdx === 0;
-    const mult = atStart ? 1 : 1 + landmarkIdx * 0.1;
+    // frontier prices rise the farther west you go, and vary a bit each trip (plus the trail year)
+    if (!atStart && s.priceLuck[landmarkIdx] == null) s.priceLuck[landmarkIdx] = Math.round((0.85 + rand() * 0.45) * 100) / 100;
+    const luck = atStart ? 1 : s.priceLuck[landmarkIdx];
+    const mult = (atStart ? 1 : 1 + landmarkIdx * 0.1) * (atStart ? 1 : luck) * yt().price;
+    const priceNote = atStart ? "" : luck < 0.95 ? "💚 Prices are lower than usual today!" : luck > 1.2 ? "🔴 Prices are high here today." : "";
     const cart = { oxen: 0, food: 0, clothes: 0, parts: 0, medicine: 0 };
     const priceOf = (it) => Math.round(it.price * mult * 100) / 100;
     const cost = () => ITEMS.reduce((sum, it) => sum + priceOf(it) * cart[it.key], 0);
@@ -332,9 +470,10 @@
       app.innerHTML = `
         <div class="card">
           <h3 class="section-title">${atStart ? "🏪 Independence General Store" : "🏰 Trading Post at " + esc(lm.name)}</h3>
+          ${atStart ? `<div class="year-banner"><b>${yt().icon} This trip: ${esc(yt().name)}</b><br>${esc(yt().text)}</div>` : ""}
           <p class="muted" style="margin-top:0">${atStart
             ? "Buy everything you need for the long trip. Choose carefully — you can't buy everything!"
-            : "Prices are higher out here on the frontier because everything had to be hauled in by wagon."}</p>
+            : "Prices are higher out here on the frontier because everything had to be hauled in by wagon."} ${priceNote}</p>
           ${ITEMS.map((it) => `
             <div class="store-row">
               <div class="emoji">${it.emoji}</div>
@@ -370,7 +509,18 @@
     render();
   }
 
+  // Use a medicine kit on someone who is sick or hurt
+  function treat(i) {
+    const p = s.family[i];
+    if (!p || !p.ail || s.supplies.medicine < 1) return;
+    const name = WW.ailments[p.ail.id].name;
+    s.supplies.medicine -= 1;
+    cure(p);
+    openModal({ icon: "💊", title: `${p.name} Is Treated`, html: `<p class="result-text">You use a medicine kit. ${esc(p.name)} is cured of ${esc(name)} and starts to feel much better.</p>`, choices: [{ label: "Continue", onClick: travelScreen }] });
+  }
+
   function travelScreen() {
+    if (!s.wx) rollWeather();
     const next = WW.landmarks[s.nextIdx];
     const people = active();
     const wagonLeft = 3 + (s.miles / TOTAL_MILES) * 88;
@@ -391,21 +541,27 @@
           <div class="goal">🏡</div>
           <div class="wagon" style="left:${wagonLeft}%">${WAGON_SVG}</div>
         </div>
-        <div class="muted" style="font-size:0.9rem">Weather: ${isCold() ? "❄️ Cold" : s.date.getMonth() >= 5 && s.date.getMonth() <= 7 ? "☀️ Hot" : "🌤️ Mild"}</div>
+        <div class="muted" style="font-size:0.9rem">Weather: <b>${s.wx.icon} ${s.wx.label}</b> • Trail year: <b>${yt().icon} ${esc(yt().name)}</b></div>
       </div>
 
       <div class="dash">
         <div class="card">
           <h3>👨‍👩‍👧‍👦 Your Family</h3>
-          ${s.family.map((p) => `
+          ${s.family.map((p, i) => {
+            const c = conditionOf(p), tr = traitOf(p);
+            return `
             <div class="person ${p.away ? "away" : ""}">
-              <span class="nm">${esc(p.name)}${p.away ? " (stayed behind)" : ""}</span>
-              ${p.away ? "<span></span>" : `<div class="bar" title="${healthWord(p.health)}"><i style="width:${p.health}%;background:${healthColor(p.health)}"></i></div>`}
-            </div>`).join("")}
+              <span class="nm">${esc(p.name)}${tr ? ` <span class="trait" title="${esc(tr.name)}: ${esc(tr.text)}">${tr.icon}</span>` : ""}${p.away ? " (stayed behind)" : ""}</span>
+              ${p.away ? "<span></span>" : `<div class="bar" title="${healthWord(p.health)} (${Math.round(p.health)}%)"><i style="width:${p.health}%;background:${healthColor(p.health)}"></i></div>`}
+              ${c && !p.away ? `<div class="cond ${c.sev}"><b>${c.icon} ${esc(c.label)}</b> <span>${esc(c.why)}${c.ail ? ` About ${c.left} more day${c.left === 1 ? "" : "s"} of rest needed.` : ""}</span>${c.ail && s.supplies.medicine > 0 ? ` <button class="treat" data-treat="${i}">💊 Treat</button>` : ""}</div>` : ""}
+            </div>`;
+          }).join("")}
           <div class="settings-line">
             <span>Pace: <b>${PACES[s.pace].name}</b></span>
             <span>Food portions: <b>${RATIONS[s.rations].name}</b></span>
           </div>
+          <div class="drains"><b>What's affecting everyone's health:</b>${drains().map((d) => `<div class="${d[0]}">${esc(d[1])}</div>`).join("")}</div>
+          ${s.family.some((p) => p.trait && !p.away) ? `<p class="muted" style="font-size:0.8rem;margin:8px 0 0">${s.family.some((p) => p.trait === "hardy") ? "💪 Hardy: gets sick less, heals faster. " : ""}${s.family.some((p) => p.trait === "frail") ? "🤧 Frail: sick more easily, heals slowly." : ""}</p>` : ""}
         </div>
         <div class="card">
           <h3>🎒 Supplies</h3>
@@ -436,6 +592,7 @@
         ${s.log.map((l) => `<p>${l.important ? "<b>" : ""}<span class="muted">${l.date}:</span> ${l.text}${l.important ? "</b>" : ""}</p>`).join("")}
       </div>`;
 
+    app.querySelectorAll("[data-treat]").forEach((b) => (b.onclick = () => treat(Number(b.dataset.treat))));
     document.getElementById("travelBtn").onclick = travelStep;
     document.getElementById("restBtn").onclick = rest;
     document.getElementById("gatherBtn").onclick = gather;
@@ -464,6 +621,8 @@
     const mountains = (s.miles >= 830 && s.miles < 1150) || (s.miles >= 1580 && s.miles < 1840);
     if (mountains) mpd *= 0.8;
     if (s.date.getMonth() === 2) mpd *= 0.85; // muddy early spring
+    if (s.miles < 700 && s.date.getMonth() <= 5) mpd *= yt().mud;   // a wet spring makes the prairie muddy
+    mpd *= s.wx ? s.wx.speed : 1;                                   // rain, storms and snow slow you down
     return Math.max(4, mpd);
   }
 
@@ -471,6 +630,7 @@
     const next = WW.landmarks[s.nextIdx];
     const startMiles = s.miles;
     let arrived = false;
+    rollWeather();
     for (let d = 0; d < 5; d++) {
       passDay(false);
       s.miles = Math.min(next.miles, Math.round(s.miles + speed()));
@@ -483,7 +643,7 @@
       if (checkGameOver()) return;
       if (arrived) return arriveAt(s.nextIdx);
       s.stepsSinceEvent++;
-      const eventChance = s.stepsSinceEvent >= 2 ? 0.6 : 0.35;
+      const eventChance = clamp((s.stepsSinceEvent >= 2 ? 0.6 : 0.35) + yt().eventChance, 0.15, 0.85);
       if (chance(eventChance)) return randomEvent();
       travelScreen();
     });
@@ -550,8 +710,13 @@
   // =====================================================================
   function randomEvent() {
     const g = makeHelpers();
-    const options = WW.events.filter((e) => e.id !== s.lastEvent && (!e.when || e.when(g)));
-    const ev = options[Math.floor(rand() * options.length)];
+    // Draw from the whole pile of events, but events you've already seen this trip are much less likely,
+    // and each trail year (wet, dry, sickly...) makes some events more likely. So every trip plays out differently.
+    const options = WW.events.filter((e) => e.id !== s.lastEvent && e.id !== s.prevEvent && (!e.when || e.when(g)));
+    const weights = options.map((e) => Math.max(0.03, (e.weight ? e.weight(g) : 1) * (yt().weights[e.id] || 1) * Math.pow(0.2, s.seen[e.id] || 0)));
+    const ev = pickWeighted(options, weights);
+    s.seen[ev.id] = (s.seen[ev.id] || 0) + 1;
+    s.prevEvent = s.lastEvent;
     s.lastEvent = ev.id;
     s.stepsSinceEvent = 0;
     const text = ev.text(g);
@@ -610,7 +775,7 @@
 
   function riverModal(lm) {
     if (lm.currentDepth == null) {
-      lm.currentDepth = Math.round((lm.depth[0] + rand() * (lm.depth[1] - lm.depth[0])) * 10) / 10;
+      lm.currentDepth = Math.round((lm.depth[0] + rand() * (lm.depth[1] - lm.depth[0])) * yt().river * 10) / 10;
       lm.width = 300 + Math.floor(rand() * 500);
     }
     const depth = lm.currentDepth;
@@ -662,8 +827,8 @@
         const bits = [`${lostFood} lbs of food`];
         if (lostClothes) bits.push(`${lostClothes} sets of clothes`);
         if (how === "ford" && depth >= 3.5 && chance(0.4) && s.supplies.oxen > 1) { g.change("oxen", -1); bits.push("1 ox"); }
-        g.hurt(15);
-        result = `Oh no! The current tips your wagon! You lose ${bits.join(", ")}. ${g.picked.name} is soaked and cold.`;
+        const p = sicken("cold", g.pick(), "got soaked and chilled in the river");
+        result = `Oh no! The current tips your wagon! You lose ${bits.join(", ")}. ${p.name} is soaked and catches a bad cold.`;
       } else if (how === "float" && depth < 2.5) {
         g.days(1);
         result = "The water was too shallow to float, so your wagon got stuck in the mud. It took a day to push it out, but everything is safe.";
@@ -698,15 +863,16 @@
       if (chance(0.35)) {
         const lost = -g.change("food", -Math.round(s.supplies.food * 0.4));
         g.change("clothes", -2);
-        g.hurt(25);
-        result = `The rapids are wild! Your raft crashes into rocks. You lose ${lost} lbs of food and some clothing, and ${g.picked.name} is hurt. But you make it down the river!`;
+        const p = sicken("bruise", g.pick(), "was thrown against the rocks");
+        applyDamage(p, 10);
+        result = `The rapids are wild! Your raft crashes into rocks. You lose ${lost} lbs of food and some clothing, and ${p.name} is battered and bruised. But you make it down the river!`;
       } else {
         result = "You build a raft from logs and float down the mighty Columbia River. It's scary in the rapids, but you make it safely!";
       }
     } else {
       s.money -= 5;
       g.days(12);
-      if (s.supplies.clothes < active().length) { g.hurt(10); result = `The Barlow Road is steep, muddy and cold. Without enough warm clothes, ${g.picked.name} gets sick. But you make it around Mount Hood!`; }
+      if (s.supplies.clothes < active().length) { const p = sicken("cold", g.pick(), "got chilled on the cold, muddy road"); result = `The Barlow Road is steep, muddy and cold. Without enough warm clothes, ${p.name} catches a bad cold. But you make it around Mount Hood!`; }
       else result = "The Barlow Road is steep and muddy. At Laurel Hill, you lower your wagon down with ropes tied to trees. But you make it around Mount Hood safely!";
     }
     s.miles = TOTAL_MILES;
@@ -772,7 +938,7 @@
         <div style="font-size:3.5rem">🏡🎉</div>
         <h2 style="color:#7a3d12;margin:6px 0">You made it to Oregon!</h2>
         <p class="result-text">On ${fmtDate(s.date)}, your wagon rolled into Oregon City after ${s.daysOnTrail} days on the trail.</p>
-        <p>${arrived.map((p) => esc(p.name)).join(", ")} ${arrived.length === 1 ? "has" : "have"} arrived and will start building a new home.
+        <p>${arrived.map((p) => esc(p.name) + (p.ail ? ` (still getting over ${WW.ailments[p.ail.id].name})` : "")).join(", ")} ${arrived.length === 1 ? "has" : "have"} arrived and will start building a new home.
           ${behind.length ? `${behind.map((p) => esc(p.name)).join(", ")} will join you next year.` : "Your whole family made it together!"}</p>
         <div class="end-stats">
           <div><b>${arrived.length}/${s.family.length}</b>family arrived</div>
@@ -843,5 +1009,6 @@
     show();
   }
 
+  window.WW_DEBUG = () => ({ s, sicken, conditionOf, travelScreen, passDay, drains });
   titleScreen();
 })();

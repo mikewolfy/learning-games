@@ -115,20 +115,20 @@ WW.events = [
   },
   {
     id: "fever", icon: "🤒", title: "Sickness on the Trail",
-    text: (g) => `${g.pick().name} feels very sick with a fever.`,
+    text: (g) => { const p = g.sicken("fever", g.pick()); return `${p.name} has a high fever. They're hot, shaky and feeling very weak.`; },
     choices: [
       {
-        label: "Stop and rest for 3 days", hint: "Uses food and time",
-        run: (g) => { g.days(3); g.heal(30, g.picked); g.heal(5); return `After resting, ${g.picked.name} is feeling better.`; },
+        label: "Stop and rest for 4 days", hint: "Uses food and time",
+        run: (g) => { g.restDays(4); return g.picked.ail ? `${g.picked.name} is feeling better, but still has a bit of fever.` : `After resting, ${g.picked.name}'s fever breaks and they feel better.`; },
       },
       {
         label: "Use medicine", hint: "Uses 1 medicine kit",
         ok: (g) => g.s.supplies.medicine > 0,
-        run: (g) => { g.change("medicine", -1); g.heal(40, g.picked); return `The medicine helps. ${g.picked.name} is feeling much better.`; },
+        run: (g) => { g.change("medicine", -1); g.cure(g.picked); return `The medicine helps. ${g.picked.name}'s fever goes down and they're feeling much better.`; },
       },
       {
         label: "Keep moving", hint: "Risky for their health",
-        run: (g) => { g.hurt(25, g.picked); return `${g.picked.name} rides in the wagon, but gets weaker.`; },
+        run: (g) => `${g.picked.name} rides in the wagon, but the fever keeps wearing them down until they rest or get medicine.`,
       },
     ],
     fact: "Sickness was the biggest danger on the trail — much bigger than accidents or animals. A disease called cholera, spread by dirty water, made thousands of pioneers sick.",
@@ -147,8 +147,8 @@ WW.events = [
         run: (g) => {
           if (g.chance(0.5)) {
             const lost = g.change("food", -40);
-            g.hurt(10);
-            return `Rain soaks your wagon and ${-lost} pounds of food is ruined. ${g.picked.name} catches a chill.`;
+            const p = g.sicken("cold", g.pick(), "caught a chill in the storm");
+            return `Rain soaks your wagon and ${-lost} pounds of food is ruined. ${p.name} gets soaked and catches a bad cold.`;
           }
           return "You push through the storm and come out just fine!";
         },
@@ -237,7 +237,7 @@ WW.events = [
       {
         label: "Drink it anyway", hint: "Saves time, risky",
         run: (g) => {
-          if (g.chance(0.45)) { g.hurt(25); return `Uh oh! ${g.picked.name} gets a terrible stomachache.`; }
+          if (g.chance(0.45)) { const p = g.sicken("dysentery", g.pick(), "drank dirty water"); return `Uh oh! ${p.name} has terrible stomach cramps. It's dysentery, caused by germs in the dirty water.`; }
           return "Lucky! Nobody gets sick this time.";
         },
       },
@@ -263,10 +263,10 @@ WW.events = [
   },
   {
     id: "ankle", icon: "🦶", title: "Twisted Ankle",
-    text: (g) => `${g.pick().name} twisted an ankle jumping down from the wagon.`,
+    text: (g) => { const p = g.sicken("sprain", g.pick()); return `${p.name} twisted an ankle jumping down from the wagon. It's swollen and sore.`; },
     choices: [
-      { label: "Rest for 2 days", hint: "Uses food and time", run: (g) => { g.days(2); g.heal(20, g.picked); return `${g.picked.name}'s ankle feels much better after resting.`; } },
-      { label: "Let them ride in the wagon", hint: "Bumpy ride!", run: (g) => { g.hurt(8, g.picked); return `The wagon is very bumpy. ${g.picked.name} is sore, but you keep moving.`; } },
+      { label: "Rest for 3 days", hint: "Uses food and time", run: (g) => { g.restDays(3); return g.picked.ail ? `${g.picked.name}'s ankle is better, but still a little sore.` : `${g.picked.name}'s ankle feels much better after resting.`; } },
+      { label: "Let them ride in the wagon", hint: "Bumpy ride!", run: (g) => `The wagon is very bumpy. ${g.picked.name}'s ankle hurts, but you keep moving.` },
     ],
     fact: "Most pioneers — even kids — walked the whole 2,000 miles! Wagons were packed full of supplies and had no springs, so riding was bumpy and uncomfortable.",
   },
@@ -299,11 +299,11 @@ WW.events = [
     choices: [
       {
         label: "Make camp and wait for it to stop", hint: "Lose 2 days",
-        run: (g) => { g.days(2); if (g.s.supplies.clothes < g.active().length) { g.hurt(8); return `Without enough warm clothes, ${g.picked.name} gets very cold.`; } return "Your warm clothes keep everyone cozy until the snow stops."; },
+        run: (g) => { g.days(2); if (g.s.supplies.clothes < g.active().length) { const p = g.sicken("cold", g.pick(), "got too cold without warm clothes"); return `Without enough warm clothes, ${p.name} gets very cold and catches a bad cold.`; } return "Your warm clothes keep everyone cozy until the snow stops."; },
       },
       {
         label: "Push on through the snow", hint: "Risky without warm clothes",
-        run: (g) => { if (g.s.supplies.clothes < g.active().length) { g.hurt(15); g.hurt(10); return "It's freezing! Not everyone has warm clothes, and some family members get sick."; } return "Bundled in warm clothes, you push through the snow."; },
+        run: (g) => { if (g.s.supplies.clothes < g.active().length) { const a = g.sicken("cold", g.pick(), "froze in the snow"); const b = g.sicken("fever", g.pick(), "got chilled to the bone"); return `It's freezing! Not everyone has warm clothes. ${a.name} has a bad cold and ${b.name} has a fever.`; } return "Bundled in warm clothes, you push through the snow."; },
       },
     ],
     fact: "Timing mattered! In 1846, a group called the Donner Party left late and got trapped by snow in the mountains of California all winter. That's why pioneers hurried to cross the mountains before the snow.",
