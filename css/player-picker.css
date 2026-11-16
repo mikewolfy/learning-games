@@ -1,0 +1,21 @@
+/* Shared "Who's playing?" styles (used with js/player-picker.js) */
+.pp-title { font-size: clamp(2rem, 7vw, 2.8rem); margin: 0; color: var(--pp-accent, var(--primary)); }
+.pp-sub { margin: 16px 0 8px; font-size: 1.15rem; color: var(--pp-accent, var(--primary)); }
+.pp-list { display: grid; gap: 10px; margin: 10px 0 14px; }
+.pp-player { display: grid; grid-template-columns: 52px 1fr auto auto; gap: 10px; align-items: center; background: #fff; border-radius: 16px; padding: 10px 12px; box-shadow: var(--shadow); }
+.pp-av { font-size: 2.3rem; text-align: center; }
+.pp-meta small { display: block; color: var(--muted); }
+.pp-del { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 6px; opacity: 0.6; }
+.pp-del:hover { opacity: 1; }
+.pp-notice { background: #fff8d6; border-left: 6px solid #f2c230; border-radius: 12px; padding: 10px 14px; margin: 10px 0; font-size: 0.95rem; }
+.pp-input { width: 100%; font-family: inherit; font-size: 1.1rem; padding: 10px 12px; border: 3px solid #d9d9e6; border-radius: 12px; background: #fff; margin-bottom: 6px; }
+.pp-input:focus { outline: none; border-color: var(--pp-accent, var(--primary)); }
+.pp-avs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.pp-av-btn { font-size: 1.7rem; padding: 6px 12px; border-radius: 999px; border: 3px solid #d9d9e6; background: #fff; cursor: pointer; }
+.pp-av-btn.on { border-color: var(--pp-accent, var(--primary)); background: #eef2ff; }
+.pp-err { color: var(--bad); font-weight: 600; min-height: 1.4em; margin: 4px 0; }
+.pp-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.pp-overlay { position: fixed; inset: 0; background: rgba(20, 20, 50, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.pp-confirm { max-width: 420px; text-align: center; }
+.pp-confirm p { font-weight: 600; font-size: 1.05rem; }
+@media (max-width: 520px) { .pp-player { grid-template-columns: 44px 1fr auto; } .pp-player .btn { grid-column: 1 / -1; } }
