@@ -14,6 +14,9 @@ A collection of fun learning games for elementary and middle school kids. Everyt
 | **Word Sprint** (`games/wordsprint/`) | Spelling (grades 2–8) | Pick a 1, 2 or 3 minute timer, then spell four-letter words using six letters (3 vowels + 3 consonants, letters can repeat). Four words clears a set for a +50 bonus and brand-new letters. 150 letter sets (120 with an S so plurals work), each with its complete word list (ENABLE + Collins dictionaries) so no real word is rejected. The top 50 scores per time limit are saved in the browser. |
 | **Map Dash** (`games/mapdash/`) | Geography (grades 3–8) | Click-the-map quiz with 13 maps: all 50 US states, four US regions, the 7 continents, the world, and Europe, Asia, Africa, North America, South America and Oceania. Three modes (find it, name it, capitals), 10 questions or a 90-second clock, with zoom and pan, hints, streak and speed bonuses, and missed places that come back for practice. Each player's best scores and tricky places are saved. |
 | **Fraction Kitchen** (`games/fractions/`) | Fractions (grades 3–7) | Customers order dishes and kids cook with fractions. Five levels: measuring cups, same-size slices, different sizes, scaling recipes and mixed numbers, and feeding a crowd. Hints, worked solutions, patience timers, tips and stars (2 stars opens the next level). Progress is saved for each player. |
+| **Ecosystem Builder** (`games/ecosystem/`) | Science (grades 3–8) | Pick plants, plant-eaters and meat-eaters for a forest, ocean reef, savanna or pond, then run 10 years of a food-web simulation. Each year brings an event (drought, wildfire, disease, hunters, baby boom) and you choose one action: add, thin out or protect a species. Reports explain why each population rose or fell. Stars and best scores are saved per player. |
+| **Code Quest** (`games/codequest/`) | Coding (grades 3–8) | 18 block-programming puzzles in three worlds: sequences, loops, and if / repeat-until decisions. Tap blocks to build a program (including nested ones), run it, and watch the robot collect gems and reach the flag. Stars reward short programs. |
+| **Word Wizard** (`games/wordwizard/`) | Reading and vocabulary (grades 3–8) | 90 words in three levels, practiced with meaning, fill-in-the-blank, synonym and antonym questions. Missed words come back and each word is tracked until mastered. Story Time has 9 short passages with main idea, detail, inference and vocabulary questions. |
 
 ## Playing it
 
@@ -63,6 +66,14 @@ games/mapdash/                 Map Dash
   mapdash-data.js              US + world map shapes, capitals, quiz sets (generated)
   mapdash.js / mapdash.css     Game engine and styles
 tools/build_mapdash_data.py    Regenerates the Map Dash map data
+games/ecosystem/               Ecosystem Builder
+  ecosystem-data.js            Biomes, species and events
+  ecosystem-engine.js          The food-web simulation (pure logic)
+  ecosystem.js / .css          Screens and styles
+games/codequest/               Code Quest (codequest.js has the levels and the robot engine)
+games/wordwizard/              Word Wizard
+  wordwizard-data.js           Words and stories
+  wordwizard.js / .css         Game and styles
 games/fractions/               Fraction Kitchen
   fractions.js / fractions.css Game engine and styles
 ```
