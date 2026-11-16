@@ -12,6 +12,8 @@ A collection of fun learning games for elementary and middle school kids. Everyt
 | **Neighbourhood Tycoon** (`games/neighbourhood/`) | Money & business (grades 4–8) | A season-by-season life sim. Each week kids split a few free hours across 12 side jobs (lemonade, mowing, babysitting, lifeguard, snow shoveling and more). Jobs need gear or training, depend on the season and weather, and level up with experience. Kids can set their price, save with interest, or invest in a fund or a risky single stock, and work toward a savings goal. Several players can share one browser; each player's progress is saved in cookies (with a localStorage fallback). |
 | **Business Builder** (`games/business/`) | Entrepreneurship (grades 5–8) | Pick one of 8 businesses and run it quarter by quarter for up to 10 years. Start as a sole proprietor, then hire a team (makers, sellers, experts, managers), form an LLC or corporation, take loans, sell shares to investors, buy equipment and expand your market, while seasons, booms and recessions, rivals, lawsuits, key employees quitting, and 20+ other events shake things up. Kids learn revenue and profit, fixed vs. variable costs, liability, taxes, cash flow, loans, equity, insurance and more. Each player's progress is saved in the browser, with a business-tips glossary and a final quiz. |
 | **Word Sprint** (`games/wordsprint/`) | Spelling (grades 2–8) | Pick a 1, 2 or 3 minute timer, then spell four-letter words using six letters (3 vowels + 3 consonants, letters can repeat). Four words clears a set for a +50 bonus and brand-new letters. 150 letter sets (120 with an S so plurals work), each with its complete word list (ENABLE + Collins dictionaries) so no real word is rejected. The top 50 scores per time limit are saved in the browser. |
+| **Map Dash** (`games/mapdash/`) | Geography (grades 3–8) | Click-the-map quiz with 13 maps: all 50 US states, four US regions, the 7 continents, the world, and Europe, Asia, Africa, North America, South America and Oceania. Three modes (find it, name it, capitals), 10 questions or a 90-second clock, with zoom and pan, hints, streak and speed bonuses, and missed places that come back for practice. Each player's best scores and tricky places are saved. |
+| **Fraction Kitchen** (`games/fractions/`) | Fractions (grades 3–7) | Customers order dishes and kids cook with fractions. Five levels: measuring cups, same-size slices, different sizes, scaling recipes and mixed numbers, and feeding a crowd. Hints, worked solutions, patience timers, tips and stars (2 stars opens the next level). Progress is saved for each player. |
 
 ## Playing it
 
@@ -55,6 +57,14 @@ games/wordsprint/              Word Sprint
   wordsprint.js                Game engine
   wordsprint.css               Game styles
 tools/build_wordsprint_data.py Regenerates the Word Sprint word lists
+js/player-picker.js            Shared "Who's playing?" screen
+css/player-picker.css          Styles for the player picker
+games/mapdash/                 Map Dash
+  mapdash-data.js              US + world map shapes, capitals, quiz sets (generated)
+  mapdash.js / mapdash.css     Game engine and styles
+tools/build_mapdash_data.py    Regenerates the Map Dash map data
+games/fractions/               Fraction Kitchen
+  fractions.js / fractions.css Game engine and styles
 ```
 
 The Westward Wagons history content all lives in `westward-data.js`, so it's easy to add new events or quiz questions.
