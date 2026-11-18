@@ -148,7 +148,7 @@
         <div class="row2"><button class="btn go" id="createBtn" style="flex:2 1 220px;font-size:1.15rem">Open for business! ▶</button><button class="btn secondary" id="backBtn">Back</button></div>
       </div>`;
     const bname = document.getElementById("bname");
-    const defaults = { bakery: "Sweet Treats", lawn: "Green Thumb Services", tech: "Bright Ideas Apps", shirts: "Print It Up", bikes: "Spoke & Wheel", pets: "Happy Tails", tutor: "Bright Minds", eco: "Green Earth Goods" };
+    const defaults = { bakery: "Sweet Treats", lawn: "Green Thumb Services", tech: "Bright Ideas Apps", shirts: "Print It Up", bikes: "Spoke & Wheel", pets: "Happy Tails", tutor: "Bright Minds", sitter: "Little Stars Sitters", eco: "Green Earth Goods" };
     function refresh() {
       app.querySelectorAll("[data-av]").forEach((x) => x.classList.toggle("on", x.dataset.av === av));
       app.querySelectorAll("[data-t]").forEach((x) => x.classList.toggle("on", x.dataset.t === typeId));
