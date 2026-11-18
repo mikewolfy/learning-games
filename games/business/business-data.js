@@ -4,7 +4,7 @@
 window.BB = window.BB || {};
 
 // ---------------------------------------------------------------------------
-// Eight kinds of business. Numbers are per QUARTER (3 months).
+// Nine kinds of business. Numbers are per QUARTER (3 months).
 //   price/cost: what one sale brings in / costs you      market: customers a quarter in a "just average" neighborhood
 //   ownerCap: what you can make or serve yourself        makerCap: what one hired maker adds
 //   season: demand multiplier for [Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec]
@@ -59,6 +59,13 @@ BB.types = {
     season: [1.1, 0.9, 0.7, 1.2], elast: 1.4, qv: 0.09, buzzMult: 1, repW: 1.15, risk: "Low",
     roles: { maker: "Tutor", seller: "Enrollment Rep", expert: "Curriculum Lead", manager: "Center Director" },
     recall: "A parent complained a tutor wasn't qualified.",
+  },
+  sitter: {
+    emoji: "🧸", name: "Babysitting Service", unit: "visits", blurb: "Look after kids while parents are out. Trust is everything, so a good reputation brings families back.",
+    startup: 1000, price: 32, cost: 7, market: 420, ownerCap: 150, makerCap: 300, rent: 400, wage: 2900,
+    season: [0.95, 1.0, 1.15, 1.25], elast: 1.3, qv: 0.1, buzzMult: 1, repW: 1.35, risk: "Low",
+    roles: { maker: "Sitter", seller: "Booking Agent", expert: "Child Development Coach", manager: "Care Coordinator" },
+    recall: "A parent complained a sitter hadn't been background-checked.",
   },
   eco: {
     emoji: "🌎", name: "Eco Online Store", unit: "orders", blurb: "Sell earth-friendly products online. Marketing is everything!",
